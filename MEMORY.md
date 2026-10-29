@@ -121,3 +121,16 @@ immutable published-byte verification and rejection of auth/service failures.
 Offline publisher tests now model drafts as absent from the by-tag endpoint;
 all six pass, including first publish, retry and conflicting commit rejection.
 The failed run is 40888736758 at main af666b49777f767d32e9b9a3215140c35433408e.
+
+## ADR-007 — 2026-10-29: retain the create response and use IDs throughout
+
+Run 40899979337 failed after draft creation: immediate discovery returned no
+matching release. ADR-006 did not eliminate discovery dependence. Create through
+the REST API and retain its returned release ID; upload assets, verify SHA-256
+API digests and publish through ID-based REST endpoints. No immediate tag/list
+lookup or tag-based CLI upload/edit is needed. Existing drafts remain discoverable
+for retries; only a draft targeting the exact commit can be modified. Tests model
+a new draft absent from both discovery endpoints, partial upload recovery,
+corrupt upload rejection, immutable published bytes and API errors. Nine tests
+pass locally. Real Actions publication of this revision remains pending merge;
+this change does not claim recovery of the failed draft or runtime gameplay fixes.
