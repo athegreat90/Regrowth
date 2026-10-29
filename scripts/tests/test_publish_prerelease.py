@@ -29,10 +29,14 @@ class FakeGitHub:
             if self.error:
                 code, err = 1, self.error
             elif '/releases/tags/' in args[2]:
-                if self.release:
+                if self.release and not self.release['draft']:
                     out = json.dumps({**self.release, 'assets': [{'name': n} for n in self.bytes]})
                 else:
                     code, err = 1, 'HTTP 404'
+            elif args[2] == '--paginate':
+                out = json.dumps(self.release) + '\n' if self.release else ''
+            elif args[2].endswith('/releases/123'):
+                out = json.dumps({**self.release, 'assets': [{'name': n} for n in self.bytes]})
             elif '/git/ref/tags/' in args[2]:
                 if self.ref:
                     out = json.dumps({'object': {'type': 'commit', 'sha': self.ref}})
@@ -47,7 +51,7 @@ class FakeGitHub:
         elif args[1:3] == ['release', 'create']:
             self.writes.append('create')
             self.ref = args[args.index('--target') + 1]
-            self.release = {'draft': True, 'prerelease': True, 'target_commitish': SHA}
+            self.release = {'id': 123, 'tag_name': f'dev-{SHA}', 'draft': True, 'prerelease': True, 'target_commitish': SHA}
         elif args[1:3] == ['release', 'upload']:
             self.writes.append('upload')
             for name in args[args.index('--clobber') + 1:]:
@@ -98,12 +102,12 @@ class PublishTest(unittest.TestCase):
 
     def test_draft_can_be_repaired_for_same_commit(self):
         self.github.ref = SHA
-        self.github.release = {'draft': True, 'prerelease': True, 'target_commitish': SHA}
+        self.github.release = {'id': 123, 'tag_name': f'dev-{SHA}', 'draft': True, 'prerelease': True, 'target_commitish': SHA}
         self.execute()
         self.assertEqual(['upload', 'edit'], self.github.writes)
 
     def test_draft_without_matching_commit_identity_is_rejected(self):
-        self.github.release = {'draft': True, 'prerelease': True, 'target_commitish': 'b' * 40}
+        self.github.release = {'id': 123, 'tag_name': f'dev-{SHA}', 'draft': True, 'prerelease': True, 'target_commitish': 'b' * 40}
         with self.assertRaises(AssertionError):
             self.execute()
         self.assertFalse(self.github.writes)

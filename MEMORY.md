@@ -110,3 +110,14 @@ no gameplay or artifact content changes. Initial successful remote run:
 https://github.com/athegreat90/Regrowth/actions/runs/40872949585
 Relevant code revision: this workflow-only commit after the implementation revision
 recorded above. Final remote result remains visible in the PR checks.
+
+## ADR-006 — 2026-10-29: draft release lookup and retry
+
+The first main publisher uploaded all four assets, then failed: GitHub's by-tag
+release endpoint returns 404 for drafts, even to the authenticated publisher.
+Use the paginated authenticated releases list as the 404-only fallback, and
+verify uploaded assets by numeric release ID. Preserve exact-commit checks,
+immutable published-byte verification and rejection of auth/service failures.
+Offline publisher tests now model drafts as absent from the by-tag endpoint;
+all six pass, including first publish, retry and conflicting commit rejection.
+The failed run is 40888736758 at main af666b49777f767d32e9b9a3215140c35433408e.
