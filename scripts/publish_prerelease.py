@@ -6,6 +6,8 @@ import os
 import pathlib
 import subprocess
 import tempfile
+import urllib.parse
+import urllib.request
 
 
 def gh(*args, check=True):
@@ -24,6 +26,8 @@ for mc in ("26.1.2", "26.2", "26.3"):
 sums = "".join(f"{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.name}\n" for p in jars)
 checksums = assets / "SHA256SUMS"
 checksums.write_text(sums)
+
+
 def find_release():
     existing = gh("api", f"repos/{repo}/releases/tags/{tag}", check=False)
     if existing.returncode == 0:
@@ -69,14 +73,36 @@ else:
             f"Changes: https://github.com/{repo}/commit/{sha}\n"
         )
         if not release:
-            gh("release", "create", tag, "--repo", repo, "--target", sha, "--draft", "--prerelease",
-               "--title", f"Development {sha}", "--notes-file", str(notes))
-            release = find_release()
-            assert release and release["draft"], "Created draft was not found"
-            assert release["target_commitish"] == sha, "Created draft targets another commit"
-        # A draft can be repaired only for the same commit checked above.
-        gh("release", "upload", tag, "--repo", repo, "--clobber", *map(str, [*jars, checksums]))
-        uploaded = json.loads(gh("api", f"repos/{repo}/releases/{release['id']}").stdout)
-        assert {a["name"] for a in uploaded["assets"]} == {p.name for p in [*jars, checksums]}
-        gh("release", "edit", tag, "--repo", repo, "--draft=false", "--prerelease", "--latest=false", "--notes-file", str(notes))
+            payload = pathlib.Path(temp) / "release.json"
+            payload.write_text(json.dumps({
+                "tag_name": tag, "target_commitish": sha, "draft": True,
+                "prerelease": True, "name": f"Development {sha}", "body": notes.read_text(),
+            }))
+            # Creation returns the authoritative ID even before discovery indexes
+            # expose the draft. Never rediscover a just-created release by tag/list.
+            release = json.loads(gh("api", "--method", "POST", f"repos/{repo}/releases",
+                                    "--input", str(payload)).stdout)
+        assert release["draft"] and release["tag_name"] == tag
+        assert release["target_commitish"] == sha, "Draft targets another commit"
+        endpoint = f"repos/{repo}/releases/{release['id']}"
+        # Use the ID throughout: tag-based CLI helpers also rediscover drafts.
+        for asset in release.get("assets", []):
+            gh("api", "--method", "DELETE", f"repos/{repo}/releases/assets/{asset['id']}")
+        for asset in [*jars, checksums]:
+            name = urllib.parse.quote(asset.name, safe="")
+            request = urllib.request.Request(
+                f"https://uploads.github.com/{endpoint}/assets?name={name}",
+                data=asset.read_bytes(), method="POST", headers={
+                    "Authorization": f"Bearer {os.environ['GH_TOKEN']}",
+                    "Content-Type": "application/octet-stream",
+                    "Accept": "application/vnd.github+json",
+                })
+            with urllib.request.urlopen(request, timeout=120) as response:
+                response.read()
+        uploaded = json.loads(gh("api", endpoint).stdout)
+        expected = {p.name: "sha256:" + hashlib.sha256(p.read_bytes()).hexdigest()
+                    for p in [*jars, checksums]}
+        assert {a["name"]: a["digest"] for a in uploaded["assets"]} == expected, "Uploaded bytes differ"
+        gh("api", "--method", "PATCH", endpoint, "--field", "draft=false",
+           "--field", "prerelease=true", "--raw-field", "make_latest=false")
     print(f"Published development prerelease {tag}")
