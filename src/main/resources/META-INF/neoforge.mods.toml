@@ -1,0 +1,23 @@
+modLoader="klf"
+loaderVersion="[1,)"
+license="MIT"
+issueTrackerURL="https://github.com/athegreat90/Regrowth/issues"
+[[mods]]
+modId="regrowth"
+version="${version}"
+displayName="Regrowth: Kotlin NeoForge Continuation"
+authors="Original: mactso, Lupicus; unofficial continuation contributors"
+logoFile="Regrowth.png"
+description='''Unofficial Kotlin continuation of Regrowth. Requires external KotlinLangForge 2.16.0-k2.4.21-3.1+neoforge. Back up worlds before upgrading.'''
+[[dependencies.regrowth]]
+modId="neoforge"
+type="required"
+versionRange="[${neo}]"
+ordering="NONE"
+side="BOTH"
+[[dependencies.regrowth]]
+modId="minecraft"
+type="required"
+versionRange="[${minecraft}]"
+ordering="NONE"
+side="BOTH"
