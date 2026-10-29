@@ -97,3 +97,16 @@ Implementation and local verification commit: `f63c72e940139136d771f5dc8ec4954c5
 This revision contains the tested code and documentation; the following commit
 only records this reference. The PR targets main and must remain unmerged pending
 the documented release gates.
+
+## ADR-005 — 2026-10-29: maintained CI action pins
+
+Context: GitHub's first three-target CI run succeeded, but reported deprecated
+Node 20/setup-java v4 actions. Alternatives: retain the old revisions or pin current
+stable official releases. Selected: immutable current release SHAs for checkout
+7.0.1, setup-java 6.1.0, gradle/actions 6.4.1, upload-artifact 7.0.2 and
+download-artifact 8.0.2. Rationale: retain supply-chain pinning while using maintained
+runtime generations. Consequence: rerun the matrix to validate the action upgrade;
+no gameplay or artifact content changes. Initial successful remote run:
+https://github.com/athegreat90/Regrowth/actions/runs/40872949585
+Relevant code revision: this workflow-only commit after the implementation revision
+recorded above. Final remote result remains visible in the PR checks.
