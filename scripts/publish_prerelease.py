@@ -24,12 +24,21 @@ for mc in ("26.1.2", "26.2", "26.3"):
 sums = "".join(f"{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.name}\n" for p in jars)
 checksums = assets / "SHA256SUMS"
 checksums.write_text(sums)
-existing = gh("api", f"repos/{repo}/releases/tags/{tag}", check=False)
-release = json.loads(existing.stdout) if existing.returncode == 0 else None
-# Distinguish missing releases from auth/service failures.
-if existing.returncode:
+def find_release():
+    existing = gh("api", f"repos/{repo}/releases/tags/{tag}", check=False)
+    if existing.returncode == 0:
+        return json.loads(existing.stdout)
+    # Drafts are absent from the by-tag endpoint. Only fall back on a real 404;
+    # auth/service failures must never be treated as permission to create one.
     if "HTTP 404" not in existing.stderr:
         raise RuntimeError(existing.stderr)
+    pages = json.loads(gh("api", "--paginate", "--slurp", f"repos/{repo}/releases").stdout)
+    matches = [r for page in pages for r in page if r["tag_name"] == tag]
+    assert len(matches) <= 1, "Multiple releases have this immutable tag"
+    return matches[0] if matches else None
+
+
+release = find_release()
 ref = gh("api", f"repos/{repo}/git/ref/tags/{tag}", check=False)
 if ref.returncode == 0:
     obj = json.loads(ref.stdout)["object"]
@@ -61,9 +70,12 @@ else:
         if not release:
             gh("release", "create", tag, "--repo", repo, "--target", sha, "--draft", "--prerelease",
                "--title", f"Development {sha}", "--notes-file", str(notes))
+            release = find_release()
+            assert release and release["draft"], "Created draft was not found"
+            assert release["target_commitish"] == sha, "Created draft targets another commit"
         # A draft can be repaired only for the same commit checked above.
         gh("release", "upload", tag, "--repo", repo, "--clobber", *map(str, [*jars, checksums]))
-        uploaded = json.loads(gh("api", f"repos/{repo}/releases/tags/{tag}").stdout)
+        uploaded = json.loads(gh("api", f"repos/{repo}/releases/{release['id']}").stdout)
         assert {a["name"] for a in uploaded["assets"]} == {p.name for p in [*jars, checksums]}
         gh("release", "edit", tag, "--repo", repo, "--draft=false", "--prerelease", "--latest=false", "--notes-file", str(notes))
     print(f"Published development prerelease {tag}")
