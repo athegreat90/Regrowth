@@ -9,3 +9,7 @@
 /.project
 *.launch
 
+**/build/
+**/run/
+.kotlin/
+__pycache__/
