@@ -92,3 +92,8 @@ world compatibility or production performance claim is justified by these checks
 No custom original SavedData exists; Fabric-reference saved data stays untouched.
 The branch will be submitted as a draft PR, left unmerged. No stable/development
 release or environment publication was executed by the agent.
+
+Implementation and local verification commit: `f63c72e940139136d771f5dc8ec4954c572a10a6` on `feat/kotlin-neoforge-port`.
+This revision contains the tested code and documentation; the following commit
+only records this reference. The PR targets main and must remain unmerged pending
+the documented release gates.
