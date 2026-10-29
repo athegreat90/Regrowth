@@ -32,8 +32,9 @@ def find_release():
     # auth/service failures must never be treated as permission to create one.
     if "HTTP 404" not in existing.stderr:
         raise RuntimeError(existing.stderr)
-    pages = json.loads(gh("api", "--paginate", "--slurp", f"repos/{repo}/releases").stdout)
-    matches = [r for page in pages for r in page if r["tag_name"] == tag]
+    listing = gh("api", "--paginate", f"repos/{repo}/releases", "--jq", ".[] | @json").stdout
+    releases = [json.loads(line) for line in listing.splitlines() if line.strip()]
+    matches = [r for r in releases if r["tag_name"] == tag]
     assert len(matches) <= 1, "Multiple releases have this immutable tag"
     return matches[0] if matches else None
 

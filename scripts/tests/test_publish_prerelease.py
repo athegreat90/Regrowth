@@ -33,8 +33,8 @@ class FakeGitHub:
                     out = json.dumps({**self.release, 'assets': [{'name': n} for n in self.bytes]})
                 else:
                     code, err = 1, 'HTTP 404'
-            elif args[2:4] == ['--paginate', '--slurp']:
-                out = json.dumps([[self.release] if self.release else []])
+            elif args[2] == '--paginate':
+                out = json.dumps(self.release) + '\n' if self.release else ''
             elif args[2].endswith('/releases/123'):
                 out = json.dumps({**self.release, 'assets': [{'name': n} for n in self.bytes]})
             elif '/git/ref/tags/' in args[2]:
