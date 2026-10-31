@@ -12,7 +12,7 @@ description='''Unofficial Kotlin continuation of Regrowth. Requires external Kot
 [[dependencies.regrowth]]
 modId="neoforge"
 type="required"
-versionRange="[${neo}]"
+versionRange="[${neo},)"
 ordering="NONE"
 side="BOTH"
 [[dependencies.regrowth]]
