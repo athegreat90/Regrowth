@@ -1,6 +1,33 @@
-# Validation evidence — 2026-10-29
+# Validation evidence
 
-## Local verification
+## NeoForge version-range fix — 2026-10-31
+
+The three artifacts now declare an inclusive NeoForge minimum (`[minimum,)`)
+while retaining their exact Minecraft requirements and original build pins.
+All three builds and artifact validators passed. The validators check each
+artifact's required NeoForge minimum to catch exact-version regressions.
+The 12 target config tests passed again; the 10 common tests were up to date.
+
+Dedicated GameTest startup and all five tests passed on each of:
+
+| Minecraft | NeoForge | Result |
+|---|---|---|
+| 26.1.2 | 26.1.2.125 | 5 passed, none skipped |
+| 26.2 | 26.2.0.93 | 5 passed, none skipped |
+| 26.3 | 26.3.0.99 | 5 passed, none skipped |
+| 26.3 | 26.3.0.100 | 5 passed, none skipped |
+
+The 26.3.0.100 check used a temporary Gradle build script overriding only the
+NeoForge development runtime version, with `:mc263:compileKotlin` excluded to
+retain classes built against 26.3.0.99. Runtime class bytes and expanded metadata
+were verified against the JAR built on 26.3.0.99. The server log confirmed
+NeoForge 26.3.0.100 and the fresh XML report contained five successful tests.
+No build pin was changed. Maven's version-range parser also confirmed that
+`[26.3.0.99,)` rejects 26.3.0.98 and accepts 26.3.0.99, .100 and .101.
+Only .99 and .100 received runtime checks for Minecraft 26.3; range acceptance
+does not certify future NeoForge versions or resolve the release gates below.
+
+## Local verification — 2026-10-29
 
 Java 25.0.5 (Temurin), Gradle 9.2.1, Kotlin 2.4.21, ModDevGradle 2.0.148,
 external KotlinLangForge 2.16.0-k2.4.21-3.1+neoforge.

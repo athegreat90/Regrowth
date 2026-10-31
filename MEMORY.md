@@ -134,3 +134,19 @@ a new draft absent from both discovery endpoints, partial upload recovery,
 corrupt upload rejection, immutable published bytes and API errors. Nine tests
 pass locally. Real Actions publication of this revision remains pending merge;
 this change does not claim recovery of the failed draft or runtime gameplay fixes.
+
+## ADR-008 — 2026-10-31: minimum NeoForge runtime versions
+
+The shared dependency template used `[${neo}]`, an exact version requirement,
+so the 26.3 artifact built against 26.3.0.99 refused to load on 26.3.0.100.
+Use `[${neo},)` for all three artifacts, retaining the existing build pins and
+exact Minecraft requirements. The artifact validator now checks each target's
+required minimum NeoForge range, preventing an exact-pin regression. Accepting
+a loader version is not a claim of tested compatibility with all future versions.
+Branch: `fix/neoforge-minimum-version-range`. All three builds/artifact validators
+and 12 target config tests passed; 10 common tests were up to date. Five GameTests
+passed on each original build pin and additionally on NeoForge 26.3.0.100 using
+the same classes/metadata built against .99 (byte-checked against the JAR).
+Maven range checks reject .98 and accept .99/.100/.101; .101 was not runtime-tested.
+See docs/VALIDATION.md for scope. Existing world, client/modpack and performance
+release gates remain.

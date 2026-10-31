@@ -18,11 +18,18 @@ Each target has its own artifact. Never substitute one version's JAR for another
 These are experimental development targets, **not verified production/world-upgrade
 support**. See [validation evidence](docs/VALIDATION.md) for exact check outcomes.
 
-| Minecraft | NeoForge pin | Java | Artifact prefix |
+| Minecraft | NeoForge build pin / minimum | Java | Artifact prefix |
 |---|---|---|---|
 | 26.1.2 | 26.1.2.125 | 25 | `regrowth-kotlin-neoforge-26.1.2-` |
 | 26.2 | 26.2.0.93 | 25 | `regrowth-kotlin-neoforge-26.2-` |
 | 26.3 | 26.3.0.99 | 25 | `regrowth-kotlin-neoforge-26.3-` |
+
+NeoForge dependency metadata accepts the listed minimum and later versions using
+`[minimum,)`; for example, the 26.3 JAR declares `[26.3.0.99,)`, allowing
+26.3.0.100 through the version check. Each JAR still requires its exact Minecraft
+version. Build dependencies stay pinned to the listed minimums. Passing the version
+check does not establish runtime compatibility with every future NeoForge version;
+see the validation evidence for versions actually tested.
 
 All use Kotlin compiler **2.4.21** and the external dependency
 **KotlinLangForge `2.16.0-k2.4.21-3.1+neoforge` by btwonion**.
